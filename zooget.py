@@ -7,6 +7,7 @@ import kazoo.exceptions
 
 parser = argparse.ArgumentParser(description='Zookeeper read client.\nReturns zookeeper item data in UTF-8 format to STDOUT. Returns "none" if no item exists', formatter_class=RawDescriptionHelpFormatter)
 parser.add_argument('item', action="store", help='/path/to/item')
+parser.add_argument('-l', dest="listing", action="store_true", default=False, help='List nested items on /path')
 args = parser.parse_args()
 
 zookeeper = {
@@ -17,11 +18,18 @@ zookeeper = {
 zk = KazooClient(hosts='%(server)s:%(port)s' % zookeeper)
 zk.start()
 
-try:
-    answer = zk.get(args.item)
-    data = answer[0].decode('utf-8')
-    print(data)
-except kazoo.exceptions.NoNodeError:
-    print('none')
+if args.listing:
+    try:
+        answer = zk.get_children(args.item)
+        print(answer)
+    except kazoo.exceptions.NoNodeError:
+        print('ERROR: No such path!')
+else:
+    try:
+        answer = zk.get(args.item)
+        data = answer[0].decode('utf-8')
+        print(data)
+    except kazoo.exceptions.NoNodeError:
+        print('none')
 
 zk.stop()
