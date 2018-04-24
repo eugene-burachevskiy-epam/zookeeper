@@ -7,7 +7,10 @@ import kazoo.exceptions
 
 parser = argparse.ArgumentParser(description='Zookeeper read client.\nReturns zookeeper item data in UTF-8 format to STDOUT. Returns "none" if no item exists', formatter_class=RawDescriptionHelpFormatter)
 parser.add_argument('item', action="store", help='/path/to/item')
-parser.add_argument('-l', dest="listing", action="store_true", default=False, help='List nested items on /path')
+group = parser.add_mutually_exclusive_group()
+group.add_argument('-l', dest="listing", action="store_true", default=False, help='List nested items on /path')
+group.add_argument('-d', dest="delete", action="store_true", default=False, help='Delete items on /path recursively')
+
 args = parser.parse_args()
 
 zookeeper = {
@@ -24,6 +27,11 @@ if args.listing:
         print(answer)
     except kazoo.exceptions.NoNodeError:
         print('ERROR: No such path!')
+
+elif args.delete:
+    zk.delete(args.item, recursive=True)
+    print(args.item + ' deleted!')
+
 else:
     try:
         answer = zk.get(args.item)
